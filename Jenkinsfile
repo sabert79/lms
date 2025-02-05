@@ -2,10 +2,12 @@ pipeline {
     agent any
 
     stages {
-        stage('Code Quality') {
+        stage('Sonar Analysis') {
             steps {
-                echo 'Sonar Analysis'
-                sh 'cd webapp && sudo docker run --rm -e SONAR_HOST_URL="http://172.212.225.128:9000" -v ".:/usr/src" -e SONAR_TOKEN="sqp_87e32cf857353ace0e9c31221e2a94c202dff736" sonarsource/sonar-scanner-cli -Dsonar.projectKey=lms'
+                echo 'CODE QUALITY CHECK'
+                // Below command works in jenkins 
+                sh 'cd webapp && sudo docker run --rm -e SONAR_HOST_URL="http://172.212.227.13:9000" -v ".:/usr/src" -e SONAR_TOKEN="sqp_7482310ee178c2c3a4be5b12aab21148954411b6" sonarsource/sonar-scanner-cli -Dsonar.projectKey=lms'
+                echo 'CODE QUALITY COMPLETED'    
             }
         }
 
@@ -24,7 +26,7 @@ pipeline {
                     def packageJSONVersion = packageJson.version
                     echo "${packageJSONVersion}"
                     sh "zip webapp/lms-${packageJSONVersion}.zip -r webapp/dist"
-                    sh "curl -v -u admin:lms12345 --upload-file webapp/lms-${packageJSONVersion}.zip http://172.212.225.128:8081/repository/lms/"
+                    sh "curl -v -u admin:lms12345 --upload-file webapp/lms-${packageJSONVersion}.zip http://172.212.227.13:8081/repository/lms/"
                 }
             }
         }
@@ -35,7 +37,7 @@ pipeline {
                     def packageJson = readJSON file: 'webapp/package.json'
                     def packageJSONVersion = packageJson.version
                     echo "${packageJSONVersion}"
-                    sh "curl -u admin:lms12345 -X GET \'http://172.212.225.128:8081/repository/lms/lms-${packageJSONVersion}.zip\' --output lms-'${packageJSONVersion}'.zip"
+                    sh "curl -u admin:lms12345 -X GET \'http://172.212.227.13:8081/repository/lms/lms-${packageJSONVersion}.zip\' --output lms-'${packageJSONVersion}'.zip"
                     sh 'sudo rm -rf /var/www/html/*'
                     sh "sudo unzip -o lms-'${packageJSONVersion}'.zip"
                     sh "sudo cp -r webapp/dist/* /var/www/html"
@@ -50,5 +52,6 @@ pipeline {
                     cleanWs()
             }
         }
+        
     }
 }
